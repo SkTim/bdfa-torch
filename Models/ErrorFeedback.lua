@@ -3,8 +3,11 @@ local ErrorFeedback, Parent = torch.class('ErrorFeedback', 'nn.Module')
 function ErrorFeedback:__init(magnitude)
   Parent.__init(self)
   self.feedback = torch.Tensor()
+  -- self.gradWeight = torch.Tensor()
   self.buffer = torch.Tensor()
   self.mag = magnitude or 0
+  self.input_buffer = torch.Tensor()
+  self.predict_buffer = torch.Tensor()
 end
 
 function ErrorFeedback:updateOutput(input)
@@ -30,10 +33,13 @@ function ErrorFeedback:updateGradInput(input, gradOutput)
   nElement = self.feedback:nElement()
   if input:dim() == 4 then
     self.feedback:resize(gradOutput:size(2), input:size(2)*input:size(3)*input:size(4))
+    -- self.gradWeight:resize(gradOutput:size(2), input:size(2)*input:size(3)*input:size(4))
   elseif input:dim() == 3 then
     self.feedback:resize(gradOutput:size(2), input:size(2)*input:size(3))
+    -- self.gradWeight:resize(gradOutput:size(2), input:size(2)*input:size(3))
   else
     self.feedback:resize(gradOutput:size(2), input:size(2))
+    -- self.gradWeight:resize(gradOutput:size(2), input:size(2))
   end
   
   if self.feedback:nElement() ~= nElement then
@@ -62,6 +68,29 @@ function ErrorFeedback:updateGradInput(input, gradOutput)
   self.gradInput:add(self.buffer:view(input:size()))
   
   return self.gradInput
+end
+
+function Linear:accGradParameters(input, gradOutput, scale)
+   scale = scale or 1
+   self.input_buffer:resizeAs(input)
+   self.input_buffer:copy(input)
+   if input:dim() == 4 then
+     self.input_buffer:resize(input:size(1), input:size(2)*input:size(3)*input:size(4))
+   elseif input:dim() == 3 then
+     self.input_buffer:resize(input:size(1), input:size(2)*input:size(3))
+   else
+     self.input_buffer:resize(input:size(1), input:size(2))
+   end
+   self.predict_buffer:resizeAs(input_buffer)
+   self.torch.mm(predict_buffer, self.yt, self.feedback)
+   self.predict_buffer = torch.sigmoid(self.predict_buffer)
+   self.predict_buffer:csub(self.input_buffer)
+   self.feedback:csub(0.005 * torch.mm(self.yt:t(), self.predict_buffer)
+end
+
+function Linear:sharedAccUpdateGradParameters(input, gradOutput, lr)
+   -- we do not need to accumulate parameters when sharing:
+   self:defaultAccUpdateGradParameters(input, gradOutput, lr)
 end
 
 function ErrorFeedback:__tostring__()

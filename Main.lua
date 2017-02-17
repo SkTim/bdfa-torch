@@ -23,7 +23,7 @@ cmd:option('-criterion',          'bce',                  'criterion, ce(cross-e
 cmd:option('-eps',                0,                      'adversarial regularization magnitude (fast-sign-method a.la Goodfellow)')
 cmd:option('-dropout',            0,                      'apply dropout')
 cmd:option('-batchnorm',          1,                      'apply batch normalization')
-cmd:option('-nonlin',             'relu',                 'nonlinearity, (tanh,sigm,relu)')
+cmd:option('-nonlin',             'sigm',                 'nonlinearity, (tanh,sigm,relu)')
 cmd:option('-num_layers',         2,                      'number of hidden layers (if applicable)')
 cmd:option('-num_hidden',         800,                    'number of hidden neurons (if applicable)')
 cmd:option('-bias',               1,                      'use bias or not')
@@ -230,7 +230,7 @@ local function Forward(Data, train, savestate)
         end
         model:zeroGradParameters()
         local dE_dy = loss:backward(y, yt)
-        local dE_dx = model:backward(x, dE_dy, 1, opt.eps > 0)
+        local dE_dx = model:backward(x, dE_dy, 1, opt.eps > 0, yt)
         
         -- Train on adversarial samples
         if opt.eps > 0 then
