@@ -44,7 +44,7 @@ cmd:option('-maxOutNorm',          400,                   'max norm on outgoing 
 cmd:option('-accGradient',         0,                     'accumulate back-prop and adversarial gradient (eps>0)')
 
 cmd:text('===>Platform Optimization')
-cmd:option('-threads',            8,                      'number of threads')
+cmd:option('-threads',            1,                      'number of threads')
 cmd:option('-type',               'cuda',                 'float or cuda')
 cmd:option('-devid',              1,                      'device ID (if using CUDA)')
 cmd:option('-nGPU',               1,                      'num of gpu devices used')
