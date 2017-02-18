@@ -93,13 +93,15 @@ function ErrorFeedback:accGradParameters(input, gradOutput, scale)
      self.input_buffer:resize(input:size(1), input:size(2))
    end
    -- self.predict_buffer:resizeAs(self.input_buffer)
-   print(self.feedback:size())
-   self.predict_buffer = torch.mm(label_matrix(self.yt, 10), self.feedback)
+   -- print(self.feedback:size())
+   local labels = label_matrix(self.yt, 10)
+   self.predict_buffer = torch.mm(labels, self.feedback)
    -- torch.mm(self.predict_buffer, self.yt, self.feedback)
    -- self.predict_buffer = torch.sigmoid(self.predict_buffer)
    self.predict_buffer = torch.tanh(self.predict_buffer)
    self.predict_buffer:csub(self.input_buffer)
-   self.feedback:csub(0.0001 * torch.mm(self.yt:t(), self.predict_buffer))
+   local dtanh = 1 - torch.cmul(self.predict_buffer, self.predict_buffer)
+   self.feedback:csub(0.00005 * torch.mm(labels:t(), dtanh))
 end
 
 function ErrorFeedback:sharedAccUpdateGradParameters(input, gradOutput, lr)
