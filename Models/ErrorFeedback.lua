@@ -8,6 +8,7 @@ function ErrorFeedback:__init(magnitude)
   self.mag = magnitude or 0
   self.input_buffer = torch.Tensor()
   self.predict_buffer = torch.Tensor()
+  -- self.batch_normlization = nn.BatchNormalization(opt.num_hidden):cuda()
 end
 
 function ErrorFeedback:updateOutput(input)
@@ -70,7 +71,8 @@ function ErrorFeedback:updateGradInput(input, gradOutput)
   return self.gradInput
 end
 
-function Linear:accGradParameters(input, gradOutput, scale)
+-- --[[
+function ErrorFeedback:accGradParameters(input, gradOutput, scale)
    scale = scale or 1
    self.input_buffer:resizeAs(input)
    self.input_buffer:copy(input)
@@ -81,17 +83,21 @@ function Linear:accGradParameters(input, gradOutput, scale)
    else
      self.input_buffer:resize(input:size(1), input:size(2))
    end
-   self.predict_buffer:resizeAs(input_buffer)
-   self.torch.mm(predict_buffer, self.yt, self.feedback)
-   self.predict_buffer = torch.sigmoid(self.predict_buffer)
+   -- self.predict_buffer:resizeAs(self.input_buffer)
+   print(self.feedback:size())
+   self.predict_buffer = torch.mm(self.yt, self.feedback)
+   -- torch.mm(self.predict_buffer, self.yt, self.feedback)
+   -- self.predict_buffer = torch.sigmoid(self.predict_buffer)
+   self.predict_buffer = torch.tanh(self.predict_buffer)
    self.predict_buffer:csub(self.input_buffer)
-   self.feedback:csub(0.005 * torch.mm(self.yt:t(), self.predict_buffer)
+   self.feedback:csub(0.0001 * torch.mm(self.yt:t(), self.predict_buffer))
 end
 
-function Linear:sharedAccUpdateGradParameters(input, gradOutput, lr)
+function ErrorFeedback:sharedAccUpdateGradParameters(input, gradOutput, lr)
    -- we do not need to accumulate parameters when sharing:
    self:defaultAccUpdateGradParameters(input, gradOutput, lr)
 end
+-- ]]--
 
 function ErrorFeedback:__tostring__()
    return string.format('%s(%f)', torch.type(self), self.mag)
