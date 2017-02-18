@@ -71,6 +71,15 @@ function ErrorFeedback:updateGradInput(input, gradOutput)
   return self.gradInput
 end
 
+function label_matrix(labels, n_classes)
+    n = labels:size(1)
+    m = torch.zeros(n, n_classes):cuda()
+    for i = 1, n do
+        m[i][labels[i]] = 1
+    end
+    return m
+end
+
 -- --[[
 function ErrorFeedback:accGradParameters(input, gradOutput, scale)
    scale = scale or 1
@@ -85,7 +94,7 @@ function ErrorFeedback:accGradParameters(input, gradOutput, scale)
    end
    -- self.predict_buffer:resizeAs(self.input_buffer)
    print(self.feedback:size())
-   self.predict_buffer = torch.mm(self.yt, self.feedback)
+   self.predict_buffer = torch.mm(label_matrix(self.yt, 10), self.feedback)
    -- torch.mm(self.predict_buffer, self.yt, self.feedback)
    -- self.predict_buffer = torch.sigmoid(self.predict_buffer)
    self.predict_buffer = torch.tanh(self.predict_buffer)
