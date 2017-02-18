@@ -230,7 +230,7 @@ local function Forward(Data, train, savestate)
         end
         model:zeroGradParameters()
         local dE_dy = loss:backward(y, yt)
-        local dE_dx = model:backward(x, dE_dy, 1, opt.eps > 0, yt, x)
+        local dE_dx = model:backward(x, dE_dy, 1, opt.eps > 0, yt, y)
         
         -- Train on adversarial samples
         if opt.eps > 0 then

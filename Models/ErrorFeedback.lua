@@ -140,7 +140,8 @@ function ErrorFeedback:accGradParameters(input, gradOutput, scale)
 
    -- self.predict_buffer:resizeAs(self.input_buffer)
    -- print(self.feedback:size())
-   local labels = label_matrix(self.yt, 10) -- :add(torch.mm(self.source_buffer, self.feedforward):mul(0.1))
+   local labels = label_matrix(self.yt, 10):add(self.y:mul(0.1))
+   -- :add(torch.mm(self.source_buffer, self.feedforward):mul(0.1))
    self.predict_buffer = torch.mm(labels, self.feedback)
 
    -- self.predict_buffer:add(torch.sigmoid(self.source_buffer, self.feedforward))
