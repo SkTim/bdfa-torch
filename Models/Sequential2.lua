@@ -18,7 +18,7 @@ function Sequential2:accGradParameters(input, gradOutput, scale)
    currentModule:accGradParameters(input, currentGradOutput, scale)
 end
 
-function Sequential2:backward(input, gradOutput, scale, backprop, yt)
+function Sequential2:backward(input, gradOutput, scale, backprop, yt, x)
    scale = scale or 1
    local currentGradOutput = gradOutput
    local currentModule = self.modules[#self.modules]
@@ -26,6 +26,7 @@ function Sequential2:backward(input, gradOutput, scale, backprop, yt)
       local previousModule = self.modules[i]
       if torch.typename(currentModule) == 'ErrorFeedback' then
         currentModule.yt = yt
+        currentModule.x = x
         if backprop==false then
           currentGradOutput = currentModule:backward(previousModule.output, gradOutput, scale)
           currentModule.gradInput = currentGradOutput

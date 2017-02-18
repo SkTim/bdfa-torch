@@ -3,9 +3,11 @@ local ErrorFeedback, Parent = torch.class('ErrorFeedback', 'nn.Module')
 function ErrorFeedback:__init(magnitude)
   Parent.__init(self)
   self.feedback = torch.Tensor()
+  self.feedforward = torch.Tensor()
   -- self.gradWeight = torch.Tensor()
   self.buffer = torch.Tensor()
   self.mag = magnitude or 0
+  self.source_buffer = torch.Tensor()
   self.input_buffer = torch.Tensor()
   self.predict_buffer = torch.Tensor()
   -- self.batch_normlization = nn.BatchNormalization(opt.num_hidden):cuda()
@@ -32,6 +34,7 @@ function ErrorFeedback:updateGradInput(input, gradOutput)
   end
 
   nElement = self.feedback:nElement()
+  nElement2 = self.feedforward:nElement()
   if input:dim() == 4 then
     self.feedback:resize(gradOutput:size(2), input:size(2)*input:size(3)*input:size(4))
     -- self.gradWeight:resize(gradOutput:size(2), input:size(2)*input:size(3)*input:size(4))
@@ -42,12 +45,30 @@ function ErrorFeedback:updateGradInput(input, gradOutput)
     self.feedback:resize(gradOutput:size(2), input:size(2))
     -- self.gradWeight:resize(gradOutput:size(2), input:size(2))
   end
+
+  if input:dim() == 4 then
+    self.feedforward:resize(3072, input:size(2)*input:size(3)*input:size(4))
+    -- self.gradWeight:resize(gradOutput:size(2), input:size(2)*input:size(3)*input:size(4))
+  elseif input:dim() == 3 then
+    self.feedforward:resize(3072, input:size(2)*input:size(3))
+    -- self.gradWeight:resize(gradOutput:size(2), input:size(2)*input:size(3))
+  else
+    self.feedforward:resize(3072, input:size(2))
+    -- self.gradWeight:resize(gradOutput:size(2), input:size(2))
+  end
   
   if self.feedback:nElement() ~= nElement then
     if self.mag == 0 then
       self.mag = 1/math.sqrt(self.feedback:size(2))
     end
     self.feedback:uniform(-self.mag, self.mag)
+  end
+
+  if self.feedforward:nElement() ~= nElement2 then
+    if self.mag == 0 then
+      self.mag = 1/math.sqrt(self.feedforward:size(2))
+    end
+    self.feedforward:uniform(-self.mag, self.mag)
   end
   
   if input:dim() == 4 then
@@ -85,6 +106,8 @@ function ErrorFeedback:accGradParameters(input, gradOutput, scale)
    scale = scale or 1
    self.input_buffer:resizeAs(input)
    self.input_buffer:copy(input)
+   self.source_buffer:resizeAs(self.x)
+   self.source_buffer:copy(self.x)
    if input:dim() == 4 then
      self.input_buffer:resize(input:size(1), input:size(2)*input:size(3)*input:size(4))
    elseif input:dim() == 3 then
@@ -92,16 +115,31 @@ function ErrorFeedback:accGradParameters(input, gradOutput, scale)
    else
      self.input_buffer:resize(input:size(1), input:size(2))
    end
+   
+   if self.x:dim() == 4 then
+     self.source_buffer:resize(self.x:size(1), self.x:size(2)*self.x:size(3)*self.x:size(4))
+   elseif self.x:dim() == 3 then
+     self.source_buffer:resize(self.x:size(1), self.x:size(2)*self.x:size(3))
+   else
+     self.source_buffer:resize(self.x:size(1), self.x:size(2))
+   end
+
    -- self.predict_buffer:resizeAs(self.input_buffer)
    -- print(self.feedback:size())
    local labels = label_matrix(self.yt, 10)
    self.predict_buffer = torch.mm(labels, self.feedback)
+
+   self.predict_buffer:add(torch.mm(self.source_buffer, self.feedforward))
+
    -- torch.mm(self.predict_buffer, self.yt, self.feedback)
    -- self.predict_buffer = torch.sigmoid(self.predict_buffer)
    self.predict_buffer = torch.tanh(self.predict_buffer)
    self.predict_buffer:csub(self.input_buffer)
    local dtanh = 1 - torch.cmul(self.predict_buffer, self.predict_buffer)
    self.feedback:csub(0.00005 * torch.mm(labels:t(), dtanh))
+
+   self.feedforward:csub(0.00005 * torch.mm(self.x:t(), dtanh))
+   
 end
 
 function ErrorFeedback:sharedAccUpdateGradParameters(input, gradOutput, lr)
