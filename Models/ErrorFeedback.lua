@@ -43,7 +43,6 @@ function ErrorFeedback:updateGradInput(input, gradOutput)
     -- self.gradWeight:resize(gradOutput:size(2), input:size(2)*input:size(3))
   else
     self.feedback:resize(gradOutput:size(2), input:size(2))
-    -- self.gradWeight:resize(gradOutput:size(2), input:size(2))
   end
 
   self.feedforward:resize(3072, 10)
@@ -128,19 +127,17 @@ function ErrorFeedback:accGradParameters(input, gradOutput, scale)
      self.input_buffer:resize(input:size(1), input:size(2))
    end
    
-   --[[
-   if self.x:dim() == 4 then
-     self.source_buffer:resize(self.x:size(1), self.x:size(2)*self.x:size(3)*self.x:size(4))
-   elseif self.x:dim() == 3 then
-     self.source_buffer:resize(self.x:size(1), self.x:size(2)*self.x:size(3))
-   else
-     self.source_buffer:resize(self.x:size(1), self.x:size(2))
-   end
-   ]]--
+   -- if self.x:dim() == 4 then
+   --   self.source_buffer:resize(self.x:size(1), self.x:size(2)*self.x:size(3)*self.x:size(4))
+   -- elseif self.x:dim() == 3 then
+   --  self.source_buffer:resize(self.x:size(1), self.x:size(2)*self.x:size(3))
+   -- else
+   --   self.source_buffer:resize(self.x:size(1), self.x:size(2))
+   -- end
 
    -- self.predict_buffer:resizeAs(self.input_buffer)
    -- print(self.feedback:size())
-   local labels = label_matrix(self.yt, 10):add(self.y:mul(0.1))
+   local labels = label_matrix(self.yt, 10) -- :add(self.y:mul(0.1))
    -- :add(torch.mm(self.source_buffer, self.feedforward):mul(0.1))
    self.predict_buffer = torch.mm(labels, self.feedback)
 
