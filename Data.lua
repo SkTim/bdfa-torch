@@ -35,6 +35,8 @@ elseif Dataset == 'Cifar10' then
 elseif Dataset == '20newsgroup' then
     TrainData = torch.load(DataPath .. '20newsgroup/20newsgroup-train.t7')
     TestData = torch.load(DataPath .. '20newsgroup/20newsgroup-test.t7')
+    TestData.label = TestData.label:add(-1):byte()
+    TrainData.label = TrainData.label:add(-1):byte()
     if opt.validate then
       TestData.data = TrainData.data:narrow(1,40001,10000)
       TestData.label = TrainData.label:narrow(1,40001,10000)

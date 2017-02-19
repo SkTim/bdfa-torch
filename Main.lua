@@ -263,7 +263,7 @@ local function Forward(Data, train, savestate)
       y = y[1]
     end
 
-    confusion:batchAdd(y,yt)
+	confusion:batchAdd(y,yt)
     if train then
       xlua.progress(NumSamples, SizeData)
     end

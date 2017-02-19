@@ -112,7 +112,7 @@ function dtanh(x)
   return 1 - torch.cmul(x, x)
 end
 
--- --[[
+--[[
 function ErrorFeedback:accGradParameters(input, gradOutput, scale)
    scale = scale or 1
    self.input_buffer:resizeAs(input)
