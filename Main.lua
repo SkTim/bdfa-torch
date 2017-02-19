@@ -55,7 +55,7 @@ cmd:option('-load',               '',                     'load existing net wei
 cmd:option('-save',               os.date():gsub(' ',''), 'save directory')
 
 cmd:text('===>Data Options')
-cmd:option('-dataset',            'MNIST',                'Dataset - Cifar10, Cifar100, STL10, SVHN, MNIST')
+cmd:option('-dataset',            'MNIST',                'Dataset - Cifar10, Cifar100, STL10, SVHN, MNIST, 20newsgroup')
 cmd:option('-normalization',      'scale',                'scale - between 0 and 1, simple - whole sample, channel - by image channel, image - mean and std images')
 cmd:option('-format',             'rgb',                  'rgb or yuv')
 cmd:option('-whiten',             false,                  'whiten data')
