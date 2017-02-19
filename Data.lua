@@ -44,6 +44,16 @@ elseif Dataset == '20newsgroup' then
       TrainData.label = TrainData.label:narrow(1,1,40000)
     end
     Classes = torch.linspace(1,20,20):storage():totable()
+elseif Dataset == 'TIMIT' then
+    TrainData = torch.load(DataPath .. 'TIMIT/timit-train.t7')
+    TestData = torch.load(DataPath .. 'TIMIT/timit-test.t7')
+    if opt.validate then
+      TestData.data = TrainData.data:narrow(1,40001,10000)
+      TestData.label = TrainData.label:narrow(1,40001,10000)
+      TrainData.data = TrainData.data:narrow(1,1,40000)
+      TrainData.label = TrainData.label:narrow(1,1,40000)
+    end
+    Classes = torch.linspace(1,1955,1955):storage():totable()
 elseif Dataset == 'STL10' then
     TrainData = torch.load(DataPath .. 'STL10/stl10-train.t7')
     TestData = torch.load(DataPath .. 'STL10/stl10-test.t7')
