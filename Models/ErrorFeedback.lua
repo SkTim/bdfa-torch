@@ -112,7 +112,7 @@ function dtanh(x)
   return 1 - torch.cmul(x, x)
 end
 
---[[
+-- --[[
 function ErrorFeedback:accGradParameters(input, gradOutput, scale)
    scale = scale or 1
    self.input_buffer:resizeAs(input)
@@ -146,8 +146,10 @@ function ErrorFeedback:accGradParameters(input, gradOutput, scale)
    -- torch.mm(self.predict_buffer, self.yt, self.feedback)
    -- self.predict_buffer = torch.sigmoid(self.predict_buffer)
    self.predict_buffer = torch.tanh(self.predict_buffer)
-   self.predict_buffer:csub(self.input_buffer)
-   local dt = dtanh(self.predict_buffer)
+   -- self.predict_buffer:csub(self.input_buffer)
+   local gradient = torch.csub(self.predict_buffer, self.input_buffer)
+   -- local dt = dtanh(self.predict_buffer)
+   local dt = dtanh(torch.cmul(self.predict_buffer, gradient))
    self.feedback:csub(0.00005 * torch.mm(labels:t(), dt))
 
    -- self.feedforward:csub(0.00005 * torch.mm(self.source_buffer:t(), dtanh))
