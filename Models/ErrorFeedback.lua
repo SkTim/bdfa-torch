@@ -44,7 +44,7 @@ function ErrorFeedback:updateGradInput(input, gradOutput)
   end
 
   self.feedforward:resize(3072, 10)
-  --[[
+  -- --[[
   if input:dim() == 4 then
     self.feedforward:resize(3072, input:size(2)*input:size(3)*input:size(4))
     -- self.gradWeight:resize(gradOutput:size(2), input:size(2)*input:size(3)*input:size(4))
@@ -55,7 +55,7 @@ function ErrorFeedback:updateGradInput(input, gradOutput)
     self.feedforward:resize(3072, input:size(2))
     -- self.gradWeight:resize(gradOutput:size(2), input:size(2))
   end
-  ]]--
+  -- ]]--
   
   if self.feedback:nElement() ~= nElement then
     if self.mag == 0 then
@@ -115,8 +115,10 @@ function ErrorFeedback:accGradParameters(input, gradOutput, scale)
    scale = scale or 1
    self.input_buffer:resizeAs(input)
    self.input_buffer:copy(input)
-   -- self.source_buffer:resizeAs(self.x)
-   -- self.source_buffer:copy(self.x)
+
+   self.source_buffer:resizeAs(self.x)
+   self.source_buffer:copy(self.x)
+
    if input:dim() == 4 then
      self.input_buffer:resize(input:size(1), input:size(2)*input:size(3)*input:size(4))
    elseif input:dim() == 3 then
@@ -125,13 +127,13 @@ function ErrorFeedback:accGradParameters(input, gradOutput, scale)
      self.input_buffer:resize(input:size(1), input:size(2))
    end
    
-   -- if self.x:dim() == 4 then
-   --   self.source_buffer:resize(self.x:size(1), self.x:size(2)*self.x:size(3)*self.x:size(4))
-   -- elseif self.x:dim() == 3 then
-   --  self.source_buffer:resize(self.x:size(1), self.x:size(2)*self.x:size(3))
-   -- else
-   --   self.source_buffer:resize(self.x:size(1), self.x:size(2))
-   -- end
+   if self.x:dim() == 4 then
+     self.source_buffer:resize(self.x:size(1), self.x:size(2)*self.x:size(3)*self.x:size(4))
+   elseif self.x:dim() == 3 then
+     self.source_buffer:resize(self.x:size(1), self.x:size(2)*self.x:size(3))
+   else
+     self.source_buffer:resize(self.x:size(1), self.x:size(2))
+   end
 
    -- self.predict_buffer:resizeAs(self.input_buffer)
    -- local labels = label_matrix(self.yt, 10)
@@ -141,7 +143,7 @@ function ErrorFeedback:accGradParameters(input, gradOutput, scale)
    -- :add(torch.mm(self.source_buffer, self.feedforward):mul(0.1))
    self.predict_buffer = torch.mm(labels, self.feedback)
 
-   -- self.predict_buffer:add(torch.sigmoid(self.source_buffer, self.feedforward))
+   self.predict_buffer:add(self.source_buffer, self.feedforward)
 
    -- torch.mm(self.predict_buffer, self.yt, self.feedback)
    -- self.predict_buffer = torch.sigmoid(self.predict_buffer)
@@ -154,7 +156,7 @@ function ErrorFeedback:accGradParameters(input, gradOutput, scale)
    self.feedback:csub(5e-5 * torch.mm(labels:t(), dy))
    -- self.feedback:csub(5e-5 * torch.randn(self.feedback:size()):cuda())
 
-   -- self.feedforward:csub(0.00005 * torch.mm(self.source_buffer:t(), dtanh))
+   self.feedforward:csub(5e-5 * torch.mm(self.source_buffer:t(), dy))
 end
 
 function ErrorFeedback:sharedAccUpdateGradParameters(input, gradOutput, lr)
