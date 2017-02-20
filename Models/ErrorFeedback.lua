@@ -4,13 +4,11 @@ function ErrorFeedback:__init(magnitude)
   Parent.__init(self)
   self.feedback = torch.Tensor()
   self.feedforward = torch.Tensor()
-  -- self.gradWeight = torch.Tensor()
   self.buffer = torch.Tensor()
   self.mag = magnitude or 0
   self.source_buffer = torch.Tensor()
   self.input_buffer = torch.Tensor()
   self.predict_buffer = torch.Tensor()
-  -- self.batch_normlization = nn.BatchNormalization(opt.num_hidden):cuda()
 end
 
 function ErrorFeedback:updateOutput(input)
@@ -46,7 +44,6 @@ function ErrorFeedback:updateGradInput(input, gradOutput)
   end
 
   self.feedforward:resize(3072, 10)
-
   --[[
   if input:dim() == 4 then
     self.feedforward:resize(3072, input:size(2)*input:size(3)*input:size(4))
@@ -97,11 +94,12 @@ end
 
 function label_matrix(labels, n_classes)
     n = labels:size(1)
-    m = torch.zeros(n, n_classes):cuda()
+    m = torch.zeros(n, n_classes)
     for i = 1, n do
         m[i][labels[i]] = 1
     end
-    return m
+	-- m:add(torch.randn(m:size()):mul(1e-2))
+    return m:cuda()
 end
 
 function gsigmoid(x)
@@ -136,8 +134,10 @@ function ErrorFeedback:accGradParameters(input, gradOutput, scale)
    -- end
 
    -- self.predict_buffer:resizeAs(self.input_buffer)
-   -- print(self.feedback:size())
-   local labels = label_matrix(self.yt, 10) -- :add(self.y:mul(0.1))
+   -- local labels = label_matrix(self.yt, 10)
+   local labels = self.y
+   -- local labels = self.y:add(label_matrix(self.yt, 10):mul(0.2))
+   -- local labels = torch.add(self.y, torch.randn(self.y:size()):mul(0.1):cuda())
    -- :add(torch.mm(self.source_buffer, self.feedforward):mul(0.1))
    self.predict_buffer = torch.mm(labels, self.feedback)
 
@@ -147,13 +147,14 @@ function ErrorFeedback:accGradParameters(input, gradOutput, scale)
    -- self.predict_buffer = torch.sigmoid(self.predict_buffer)
    self.predict_buffer = torch.tanh(self.predict_buffer)
    -- self.predict_buffer:csub(self.input_buffer)
-   local gradient = torch.csub(self.predict_buffer, self.input_buffer)
-   -- local dt = dtanh(self.predict_buffer)
-   local dt = dtanh(torch.cmul(self.predict_buffer, gradient))
-   self.feedback:csub(0.00005 * torch.mm(labels:t(), dt))
+   local batch_normalization = nn.BatchNormalization(self.feedback:size(2)):cuda()
+   local gradient = torch.csub(batch_normalization:forward(self.predict_buffer), self.input_buffer)
+   local dt = dtanh(self.predict_buffer)
+   local dy = torch.cmul(dt, gradient)
+   self.feedback:csub(5e-5 * torch.mm(labels:t(), dy))
+   -- self.feedback:csub(5e-5 * torch.randn(self.feedback:size()):cuda())
 
    -- self.feedforward:csub(0.00005 * torch.mm(self.source_buffer:t(), dtanh))
-   
 end
 
 function ErrorFeedback:sharedAccUpdateGradParameters(input, gradOutput, lr)
