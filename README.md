@@ -29,7 +29,7 @@ luarocks install unsup
 luarocks install https://raw.github.com/andresy/mnist/master/rocks/mnist-scm-1.rockspec
 ```
 
-##Training
+## Training
 To train and evaluate the Bidirectional Direct Feedback Alignment model on MNIST and CIFAR10 datasets,
 ```lua
 th Main.lua -dataset MNIST -network mlp.lua -LR 1e-4 -eps 0.08
@@ -39,7 +39,7 @@ or,
 th Main.lua -dataset Cifar10 -network conv.lua -LR 5e-5 -whiten
 ```
 
-##Additional flags
+## Additional flags
 |Flag             | Default Value        |Description
 |:----------------|:--------------------:|:----------------------------------------------
 |modelsFolder     |  ./Models/           | models Folder
