@@ -1,18 +1,18 @@
-Training neural networks with back-prop, feedback-alignment and direct feedback-alignment
+Bidirectional Propagation
 ==========================================================================================
 
 This repo contains code to reproduce experiments in paper
-"Direct Feedback Alignment Provides Learning in Deep Neural Networks"
-(https://arxiv.org/abs/1609.01596)
+"Bidirectional Backpropagation: Towards Biologically Plausible Error Signal Transmission in Neural Networks"
+(https://arxiv.org/abs/1702.07097)
 
-This code and readme is copied and modified based on https://github.com/eladhoffer/ConvNet-torch (Deep Networks on classification tasks using Torch)
+This code and readme is copied and modified based on https://github.com/anokland/dfa-torch (Direct Feedback Alignment using Torch)
 
-Supported datasets are {Cifar10/100, STL10, SVHN, MNIST}
+Supported datasets are {Cifar10, MNIST}
 
-##Data
+## Data
 You can get the needed data using @soumith's repo: https://github.com/soumith/cifar.torch.git
 
-##Dependencies
+## Dependencies
 * Torch (http://torch.ch)
 * "DataProvider.torch" (https://github.com/eladhoffer/DataProvider.torch) for DataProvider class.
 * "cudnn.torch" (https://github.com/soumith/cudnn.torch) for faster training. Can be avoided by changing "cudnn" to "nn" in models.
@@ -30,17 +30,13 @@ luarocks install https://raw.github.com/andresy/mnist/master/rocks/mnist-scm-1.r
 ```
 
 ##Training
-You can reproduce the best results for direct feedback-alignment for each dataset with:
+To train and evaluate the Bidirectional Direct Feedback Alignment model on MNIST and CIFAR10 datasets,
 ```lua
 th Main.lua -dataset MNIST -network mlp.lua -LR 1e-4 -eps 0.08
 ```
 or,
 ```lua
 th Main.lua -dataset Cifar10 -network conv.lua -LR 5e-5 -whiten
-```
-or,
-```lua
-th Main.lua -dataset Cifar100 -network conv.lua -LR 2.5e-5 -whiten
 ```
 
 ##Additional flags
