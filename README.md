@@ -6,11 +6,7 @@ This repo contains code to reproduce experiments in paper
 (https://arxiv.org/abs/1702.07097)
 
 This code and readme is copied and modified based on https://github.com/anokland/dfa-torch (Direct Feedback Alignment using Torch)
-
 Supported datasets are {Cifar10, MNIST}
-
-## Data
-You can get the needed data using @soumith's repo: https://github.com/soumith/cifar.torch.git
 
 ## Dependencies
 * Torch (http://torch.ch)
@@ -32,11 +28,11 @@ luarocks install https://raw.github.com/andresy/mnist/master/rocks/mnist-scm-1.r
 ## Training
 To train and evaluate the Bidirectional Direct Feedback Alignment model on MNIST and CIFAR10 datasets,
 ```lua
-th Main.lua -dataset MNIST -network mlp.lua -LR 1e-4 -eps 0.08
+th Main.lua -dataset MNIST -network mlp.lua -LR 1e-4
 ```
 or,
 ```lua
-th Main.lua -dataset Cifar10 -network conv.lua -LR 5e-5 -whiten
+th Main.lua -dataset Cifar10 -network conv.lua -LR 5e-5
 ```
 
 ## Additional flags
