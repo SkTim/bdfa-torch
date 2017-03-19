@@ -44,7 +44,7 @@ function ErrorFeedback:updateGradInput(input, gradOutput)
   end
 
   self.feedforward:resize(3072, 10)
-  -- --[[
+  --[[
   if input:dim() == 4 then
     self.feedforward:resize(3072, input:size(2)*input:size(3)*input:size(4))
     -- self.gradWeight:resize(gradOutput:size(2), input:size(2)*input:size(3)*input:size(4))
@@ -92,14 +92,14 @@ function ErrorFeedback:updateGradInput(input, gradOutput)
   return self.gradInput
 end
 
-function label_matrix(labels, n_classes)
+function label_matrix(labels, y, n_classes)
     n = labels:size(1)
-    m = torch.zeros(n, n_classes)
+    m = torch.zeros(n, n_classes):cuda()
+	m:copy(y:mul(0.25))
     for i = 1, n do
         m[i][labels[i]] = 1
     end
-	-- m:add(torch.randn(m:size()):mul(1e-2))
-    return m:cuda()
+    return m
 end
 
 function gsigmoid(x)
@@ -127,6 +127,7 @@ function ErrorFeedback:accGradParameters(input, gradOutput, scale)
      self.input_buffer:resize(input:size(1), input:size(2))
    end
    
+   --[[
    if self.x:dim() == 4 then
      self.source_buffer:resize(self.x:size(1), self.x:size(2)*self.x:size(3)*self.x:size(4))
    elseif self.x:dim() == 3 then
@@ -134,29 +135,38 @@ function ErrorFeedback:accGradParameters(input, gradOutput, scale)
    else
      self.source_buffer:resize(self.x:size(1), self.x:size(2))
    end
+   -- ]]--
 
    -- self.predict_buffer:resizeAs(self.input_buffer)
-   -- local labels = label_matrix(self.yt, 10)
-   local labels = self.y
-   -- local labels = self.y:add(label_matrix(self.yt, 10):mul(0.2))
+   local labels = label_matrix(self.yt, self.y, 10)
+   -- local labels = self.y
+   -- local labels = self.y:add(label_matrix(self.yt, self.y, 10):mul(0.5))
    -- local labels = torch.add(self.y, torch.randn(self.y:size()):mul(0.1):cuda())
    -- :add(torch.mm(self.source_buffer, self.feedforward):mul(0.1))
    self.predict_buffer = torch.mm(labels, self.feedback)
 
-   self.predict_buffer:add(self.source_buffer, self.feedforward)
+   -- self.predict_buffer:add(torch.mm(self.source_buffer, self.feedforward))
 
    -- torch.mm(self.predict_buffer, self.yt, self.feedback)
    -- self.predict_buffer = torch.sigmoid(self.predict_buffer)
-   self.predict_buffer = torch.tanh(self.predict_buffer)
+   -- local batch_normalization = nn.BatchNormalization(self.feedback:size(2)):cuda()
+   -- self.predict_buffer = batch_normalization:forward(torch.tanh(self.predict_buffer))
+   -- local activation = torch.tanh(self.predict_buffer)
+   local activation = self.predict_buffer
+   local gradient = (1 - torch.sigmoid(torch.mm(activation, self.input_buffer:t()))):cmul(torch.eye(input:size(1)):cuda())
+   local dt = torch.mm(gradient, self.input_buffer)
+   -- dt:cmul(dtanh(activation))
    -- self.predict_buffer:csub(self.input_buffer)
-   local batch_normalization = nn.BatchNormalization(self.feedback:size(2)):cuda()
-   local gradient = torch.csub(batch_normalization:forward(self.predict_buffer), self.input_buffer)
-   local dt = dtanh(self.predict_buffer)
-   local dy = torch.cmul(dt, gradient)
-   self.feedback:csub(5e-5 * torch.mm(labels:t(), dy))
+   -- local gradient = torch.csub(self.predict_buffer, self.input_buffer)
+   -- local gradient = torch.csub(batch_normalization:forward(self.predict_buffer), self.input_buffer)
+   -- local dt = dtanh(self.predict_buffer)
+   -- local dy = torch.cmul(dt, gradient)
+   -- self.feedback:csub(5e-5 * torch.mm(labels:t(), dt))
+   self.feedback:add(5e-5 * torch.mm(labels:t(), dt))
    -- self.feedback:csub(5e-5 * torch.randn(self.feedback:size()):cuda())
 
-   self.feedforward:csub(5e-5 * torch.mm(self.source_buffer:t(), dy))
+   -- self.feedforward:csub(5e-5 * torch.mm(self.source_buffer:t(), dy))
+   -- self.feedforward:csub(5e-5 * torch.randn(self.feedforward:size()):cuda())
 end
 
 function ErrorFeedback:sharedAccUpdateGradParameters(input, gradOutput, lr)

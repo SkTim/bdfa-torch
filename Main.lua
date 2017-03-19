@@ -22,7 +22,7 @@ cmd:option('-network',            'mlp.lua',              'Model file - must ret
 cmd:option('-criterion',          'bce',                  'criterion, ce(cross-entropy) or bce(binary cross-entropy)')
 cmd:option('-eps',                0,                      'adversarial regularization magnitude (fast-sign-method a.la Goodfellow)')
 cmd:option('-dropout',            0,                      'apply dropout')
-cmd:option('-batchnorm',          1,                      'apply batch normalization')
+cmd:option('-batchnorm',          0,                      'apply batch normalization')
 cmd:option('-nonlin',             'tanh',                 'nonlinearity, (tanh,sigm,relu)')
 cmd:option('-num_layers',         2,                      'number of hidden layers (if applicable)')
 cmd:option('-num_hidden',         800,                    'number of hidden neurons (if applicable)')
@@ -36,7 +36,7 @@ cmd:option('-weightDecay',        0.0,                    'L2 penalty on the wei
 cmd:option('-momentum',           0.0,                    'momentum')
 cmd:option('-batchSize',          128,                     'batch size')
 cmd:option('-optimization',       'sgd',              'optimization method')
-cmd:option('-epoch',              300,                    'number of epochs to train, -1 for unbounded')
+cmd:option('-epoch',              200,                    'number of epochs to train, -1 for unbounded')
 cmd:option('-epoch_step',         -1,                     'learning rate step, -1 for no step, 0 for auto, >0 for multiple of epochs to decrease')
 cmd:option('-gradient',           'dfa',                  'gradient for learning (bp, fa or dfa)')
 cmd:option('-maxInNorm',           400,                   'max norm on incoming weights')
@@ -230,7 +230,7 @@ local function Forward(Data, train, savestate)
         end
         model:zeroGradParameters()
         local dE_dy = loss:backward(y, yt)
-        local dE_dx = model:backward(x, dE_dy, 1, opt.eps > 0, yt, y)
+        local dE_dx = model:backward(x, dE_dy, 1, opt.eps > 0, yt, x, y)
         
         -- Train on adversarial samples
         if opt.eps > 0 then
